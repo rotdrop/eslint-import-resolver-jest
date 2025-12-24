@@ -3,6 +3,7 @@
 const path = require('path');
 const findRoot = require('find-root');
 const resolve = require('resolve');
+const tsNode = require('ts-node');
 
 type ResolverConfig = {
   jestConfigFile?: string,
@@ -72,10 +73,30 @@ function getJestConfig(config?: ResolverConfig = {}, file: Path): JestConfig {
   const root = findRoot(file);
   if (config.jestConfigFile) {
     const configFilePath = path.resolve(root, config.jestConfigFile);
-    try {
-      jestConfig = require(configFilePath);
-    } catch (e) {
-      throw new Error(`jestConfigFile not found in ${configFilePath}`);
+    if (configFilePath.endsWith('.ts')) {
+      try {
+        const tsCompiler = tsNode.register({
+          compilerOptions: {
+            module: 'CommonJS'
+          },
+          moduleTypes: {
+            '**': 'cjs'
+          }
+        });
+        tsCompiler.enabled(true);
+        jestConfig = require(configFilePath).default;
+      } catch (e) {
+        throw new Error(`TS jestConfigFile could not be loaded from ${configFilePath}`, { cause: e });
+      }
+    } else {
+      try {
+        jestConfig = require(configFilePath);
+      } catch (e) {
+        throw new Error(`jestConfigFile not be loaded from ${configFilePath}`, { cause: e });
+      }
+    }
+    if (jestConfig.__esModule && jestConfig.default) {
+      jestConfig = jestConfig.default;
     }
   } else {
     const packageJson = require(path.resolve(root, 'package.json'));

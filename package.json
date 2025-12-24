@@ -35,7 +35,8 @@
   "homepage": "https://github.com/JoinColony/eslint-import-resolver-jest",
   "dependencies": {
     "find-root": "^1.1.0",
-    "resolve": "^1.12.0"
+    "resolve": "^1.12.0",
+    "ts-node": "*"
   },
   "files": [
     "lib",
